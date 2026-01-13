@@ -9,6 +9,29 @@
 <body>
     <div id="container">
         <h1>Unit Circle Basics</h1>
+        <div id="info-panel">
+            <div class="stat-box">
+                <span class="label">Angle:</span>
+                <span id="angle-deg" class="value">0°</span>
+                <span id="angle-rad" class="sub-value">(0π)</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Coords:</span>
+                <span id="coords" class="value">(1.00, 0.00)</span>
+            </div>
+            <div class="stat-box" style="color: #dc3545;">
+                <span class="label">sin(θ):</span>
+                <span id="val-sin" class="value">0.00</span>
+            </div>
+            <div class="stat-box" style="color: #0d6efd;">
+                <span class="label">cos(θ):</span>
+                <span id="val-cos" class="value">1.00</span>
+            </div>
+            <div class="stat-box" style="color: #198754;">
+                <span class="label">tan(θ):</span>
+                <span id="val-tan" class="value">0.00</span>
+            </div>
+        </div>
         <canvas id="cartesianPlane"></canvas>
     </div>
     <script src="script.js"></script>
