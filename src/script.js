@@ -1,11 +1,18 @@
 const canvas = document.getElementById('cartesianPlane');
 const ctx = canvas.getContext('2d');
+
+// UI Elements
 const uiAngleDeg = document.getElementById('angle-deg');
 const uiAngleRad = document.getElementById('angle-rad');
 const uiCoords = document.getElementById('coords');
 const uiSin = document.getElementById('val-sin');
 const uiCos = document.getElementById('val-cos');
 const uiTan = document.getElementById('val-tan');
+const uiCot = document.getElementById('val-cot');
+const uiSec = document.getElementById('val-sec');
+const uiCsc = document.getElementById('val-csc');
+const uiToggle = document.getElementById('unit-toggle');
+const uiModeText = document.getElementById('mode-text');
 
 const WIDTH = 600;
 const HEIGHT = 600;
@@ -13,9 +20,13 @@ const CENTER_X = WIDTH / 2;
 const CENTER_Y = HEIGHT / 2;
 const UNIT_SCALE = 200; // 200px = 1 unit
 
+// Colors
 const SIN_COLOR = '#dc3545';
 const COS_COLOR = '#0d6efd';
 const TAN_COLOR = '#198754';
+const COT_COLOR = '#0dcaf0';
+const SEC_COLOR = '#fd7e14';
+const CSC_COLOR = '#6f42c1';
 
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
@@ -23,6 +34,7 @@ canvas.height = HEIGHT;
 // State
 let currentAngle = 0; // radians
 let isDragging = false;
+let mode = 'DEG'; // 'DEG' or 'RAD'
 
 function toScreenX(modelX) {
     return CENTER_X + modelX * UNIT_SCALE;
@@ -32,27 +44,45 @@ function toScreenY(modelY) {
     return CENTER_Y - modelY * UNIT_SCALE; // Flip Y for canvas
 }
 
+function formatValue(val) {
+    if (Math.abs(val) > 100) return (val > 0 ? "+∞" : "-∞");
+    return val.toFixed(3);
+}
+
 function updateUI() {
     let deg = (currentAngle * 180 / Math.PI) % 360;
     if (deg < 0) deg += 360;
     
+    // Highlight the active unit
+    if (mode === 'DEG') {
+        uiAngleDeg.style.fontWeight = 'bold';
+        uiAngleDeg.style.color = '#000';
+        uiAngleRad.style.fontWeight = 'normal';
+        uiAngleRad.style.color = '#adb5bd';
+    } else {
+        uiAngleDeg.style.fontWeight = 'normal';
+        uiAngleDeg.style.color = '#adb5bd';
+        uiAngleRad.style.fontWeight = 'bold';
+        uiAngleRad.style.color = '#000';
+    }
+
     const x = Math.cos(currentAngle);
     const y = Math.sin(currentAngle);
     const tanVal = Math.tan(currentAngle);
+    const cotVal = 1 / tanVal;
+    const secVal = 1 / x;
+    const cscVal = 1 / y;
 
     uiAngleDeg.textContent = `${deg.toFixed(1)}°`;
     uiAngleRad.textContent = `(${(currentAngle / Math.PI).toFixed(2)}π)`;
     uiCoords.textContent = `(${x.toFixed(2)}, ${y.toFixed(2)})`;
     
-    uiSin.textContent = y.toFixed(3);
-    uiCos.textContent = x.toFixed(3);
-    
-    // Check for large values indicating asymptote
-    if (Math.abs(tanVal) > 100) {
-        uiTan.textContent = tanVal > 0 ? "+∞" : "-∞";
-    } else {
-        uiTan.textContent = tanVal.toFixed(3);
-    }
+    uiSin.textContent = formatValue(y);
+    uiCos.textContent = formatValue(x);
+    uiTan.textContent = formatValue(tanVal);
+    uiCot.textContent = formatValue(cotVal);
+    uiSec.textContent = formatValue(secVal);
+    uiCsc.textContent = formatValue(cscVal);
 }
 
 function drawGrid() {
@@ -112,55 +142,91 @@ function drawTriangle() {
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(originX, originY);
-    ctx.lineTo(screenX, originY); // Along X-axis
+    ctx.lineTo(screenX, originY);
     ctx.stroke();
 
     // Sine (Vertical)
     ctx.strokeStyle = SIN_COLOR;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(screenX, originY); // From X-axis
-    ctx.lineTo(screenX, screenY); // To Point
+    ctx.moveTo(screenX, originY);
+    ctx.lineTo(screenX, screenY);
     ctx.stroke();
 }
 
-function drawTangent() {
+function drawTangentAndSecant() {
     const x = Math.cos(currentAngle);
-    
-    // Avoid drawing when angle is effectively vertical (tan undefined)
-    if (Math.abs(x) < 0.01) return;
+    if (Math.abs(x) < 0.01) return; // Vertical asymptote
 
-    const tanVal = Math.tan(currentAngle);
-    
-    // We visualize tangent on the line x = 1 (right side)
-    // or x = -1 (left side) depending on which side the angle is facing
-    // Standard definition uses x=1 axis.
-    
     const targetX = x >= 0 ? 1 : -1;
-    const targetY = tanVal * targetX; // y = tan(theta) * x direction
+    const tanVal = Math.tan(currentAngle);
+    const targetY = tanVal * targetX;
     
-    const screenX1 = toScreenX(targetX);
-    const screenY1 = toScreenY(0);
-    const screenX2 = toScreenX(targetX);
-    const screenY2 = toScreenY(targetY);
+    const originX = toScreenX(0);
+    const originY = toScreenY(0);
+    const screenX_TanStart = toScreenX(targetX);
+    const screenY_TanStart = toScreenY(0);
+    const screenX_TanEnd = toScreenX(targetX);
+    const screenY_TanEnd = toScreenY(targetY);
     
-    // Draw the Tangent Line Segment
+    // Tangent (Green) - Segment on x=1 or x=-1
     ctx.strokeStyle = TAN_COLOR;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(screenX1, screenY1);
-    ctx.lineTo(screenX2, screenY2);
+    ctx.moveTo(screenX_TanStart, screenY_TanStart);
+    ctx.lineTo(screenX_TanEnd, screenY_TanEnd);
     ctx.stroke();
-    
-    // Draw extension dotted line from center to tangent point
-    ctx.strokeStyle = '#999';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 5]);
+
+    // Secant (Orange) - Hypotenuse from Origin to Tangent End
+    ctx.strokeStyle = SEC_COLOR;
+    ctx.lineWidth = 2;
+    // We want the Secant to be distinct, maybe slightly offset or dashed? 
+    // Usually it overlaps the radius, but it goes further if sec > 1.
+    // Let's draw it solid but behind or on top. 
+    // Since Radius is drawn last, let's draw Secant here.
     ctx.beginPath();
-    ctx.moveTo(CENTER_X, CENTER_Y);
-    ctx.lineTo(screenX2, screenY2);
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(screenX_TanEnd, screenY_TanEnd);
     ctx.stroke();
-    ctx.setLineDash([]);
+}
+
+function drawCotangentAndCosecant() {
+    const y = Math.sin(currentAngle);
+    if (Math.abs(y) < 0.01) return; // Horizontal asymptote
+
+    const targetY = y >= 0 ? 1 : -1;
+    // cot = x/y. The line is y = 1. X coordinate is cot(theta) * targetY?
+    // If targetY is 1, X = cot. Point is (cot, 1).
+    // If targetY is -1, X = cot * -1? No.
+    // Cotangent line is at y=1 or y=-1.
+    // The point is intersection of radius extension with y=targetY.
+    // X = cot(theta) * targetY.
+    
+    const cotVal = 1 / Math.tan(currentAngle);
+    const targetX = cotVal * targetY;
+
+    const originX = toScreenX(0);
+    const originY = toScreenY(0);
+    const screenX_CotStart = toScreenX(0);
+    const screenY_CotStart = toScreenY(targetY);
+    const screenX_CotEnd = toScreenX(targetX);
+    const screenY_CotEnd = toScreenY(targetY);
+
+    // Cotangent (Cyan) - Segment on y=1 or y=-1
+    ctx.strokeStyle = COT_COLOR;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(screenX_CotStart, screenY_CotStart);
+    ctx.lineTo(screenX_CotEnd, screenY_CotEnd);
+    ctx.stroke();
+
+    // Cosecant (Purple) - Hypotenuse from Origin to Cotangent End
+    ctx.strokeStyle = CSC_COLOR;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(screenX_CotEnd, screenY_CotEnd);
+    ctx.stroke();
 }
 
 function drawRadiusVector() {
@@ -172,7 +238,7 @@ function drawRadiusVector() {
 
     // Line from center
     ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(CENTER_X, CENTER_Y);
     ctx.lineTo(screenX, screenY);
@@ -190,7 +256,11 @@ function draw() {
     drawGrid();
     drawAxes();
     drawUnitCircle();
-    drawTangent(); // Draw behind triangle
+    
+    // Draw secondary functions first so they are behind primary ones if they overlap
+    drawCotangentAndCosecant();
+    drawTangentAndSecant();
+    
     drawTriangle();
     drawRadiusVector();
     updateUI();
@@ -200,9 +270,23 @@ function draw() {
 function handleInput(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const x = clientX - rect.left - CENTER_X;
-    const y = CENTER_Y - (clientY - rect.top); // Invert Y
+    const y = CENTER_Y - (clientY - rect.top);
     
-    currentAngle = Math.atan2(y, x);
+    let rawAngle = Math.atan2(y, x);
+    if (rawAngle < 0) rawAngle += 2 * Math.PI;
+
+    // Snapping Logic
+    if (mode === 'DEG') {
+        // Snap to nearest degree
+        let deg = rawAngle * 180 / Math.PI;
+        deg = Math.round(deg);
+        currentAngle = deg * Math.PI / 180;
+    } else {
+        // Snap to nearest PI/24 (7.5 degrees) for cleaner radian fractions
+        const step = Math.PI / 24;
+        currentAngle = Math.round(rawAngle / step) * step;
+    }
+
     draw();
 }
 
@@ -221,10 +305,9 @@ window.addEventListener('mouseup', () => {
     isDragging = false;
 });
 
-// Touch support
 canvas.addEventListener('touchstart', (e) => {
     isDragging = true;
-    e.preventDefault(); // Prevent scrolling
+    e.preventDefault();
     handleInput(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 
@@ -237,6 +320,13 @@ window.addEventListener('touchmove', (e) => {
 
 window.addEventListener('touchend', () => {
     isDragging = false;
+});
+
+// Toggle Logic
+uiToggle.addEventListener('change', (e) => {
+    mode = e.target.checked ? 'RAD' : 'DEG';
+    uiModeText.textContent = mode;
+    updateUI(); // Refresh UI emphasis
 });
 
 // Initial draw

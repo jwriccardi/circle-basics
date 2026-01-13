@@ -10,6 +10,15 @@
     <div id="container">
         <h1>Unit Circle Basics</h1>
         <div id="info-panel">
+            <div class="toggle-container">
+                <span class="toggle-label">Mode:</span>
+                <label class="switch">
+                    <input type="checkbox" id="unit-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span id="mode-text" class="toggle-value">DEG</span>
+            </div>
+            
             <div class="stat-box">
                 <span class="label">Angle:</span>
                 <span id="angle-deg" class="value">0°</span>
@@ -31,6 +40,18 @@
                 <span class="label">tan(θ):</span>
                 <span id="val-tan" class="value">0.00</span>
             </div>
+            <div class="stat-box" style="color: #0dcaf0;">
+                <span class="label">cot(θ):</span>
+                <span id="val-cot" class="value">∞</span>
+            </div>
+            <div class="stat-box" style="color: #fd7e14;">
+                <span class="label">sec(θ):</span>
+                <span id="val-sec" class="value">1.00</span>
+            </div>
+            <div class="stat-box" style="color: #6f42c1;">
+                <span class="label">csc(θ):</span>
+                <span id="val-csc" class="value">∞</span>
+            </div>
         </div>
         <canvas id="cartesianPlane"></canvas>
         
@@ -48,7 +69,22 @@
             <div class="card tan-card">
                 <h3>Tangent (tan)</h3>
                 <p>The length of the segment on the tangent line (at x=1). It represents the slope of the radius.</p>
-                <code class="formula">tan(θ) = y / x</code>
+                <code class="formula">tan(θ) = sin/cos</code>
+            </div>
+            <div class="card cot-card">
+                <h3>Cotangent (cot)</h3>
+                <p>The reciprocal of tangent. Visually, it's the segment on the horizontal tangent line (at y=1).</p>
+                <code class="formula">cot(θ) = 1/tan</code>
+            </div>
+            <div class="card sec-card">
+                <h3>Secant (sec)</h3>
+                <p>The reciprocal of cosine. It is the hypotenuse of the triangle formed by the tangent line and the x-axis.</p>
+                <code class="formula">sec(θ) = 1/cos</code>
+            </div>
+            <div class="card csc-card">
+                <h3>Cosecant (csc)</h3>
+                <p>The reciprocal of sine. It is the hypotenuse of the triangle formed by the cotangent line and the y-axis.</p>
+                <code class="formula">csc(θ) = 1/sin</code>
             </div>
         </div>
     </div>
